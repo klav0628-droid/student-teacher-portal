@@ -65,3 +65,4 @@ jobs:
         with:
           name: Kartar-Classes-Daudnagar-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+# build trigger 2026-08-27
