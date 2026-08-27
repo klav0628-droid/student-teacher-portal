@@ -1,0 +1,6 @@
+<resources>
+<style name="Theme.KartarClasses" parent="android:style/Theme.Material.Light.NoActionBar">
+<item name="android:fontFamily">sans</item><item name="android:colorAccent">#06264D</item>
+<item name="android:statusBarColor">#06264D</item><item name="android:navigationBarColor">#06264D</item>
+<item name="android:windowLightStatusBar">false</item>
+</style></resources>
