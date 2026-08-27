@@ -53,4 +53,4 @@ async function logout(){await db.auth.signOut();location.reload()}window.registe
 document.addEventListener('DOMContentLoaded',bindAuthButtons);
 bindAuthButtons();
 db.auth.getSession().then(({data})=>{if(data.session)load(data.session.user)}).catch(e=>msg('Supabase connection error: '+(e.message||e)));
-</script></body></html>
+</script><script src="./recording-fix.js"></script></body></html>
