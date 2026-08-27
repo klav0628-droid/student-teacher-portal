@@ -18,7 +18,7 @@
           const {data:live,error:liveError}=await db.from('live_classes').select('id,classroom_id,teacher_id,title').eq('id',liveCurrentId).maybeSingle();
           if(liveError) throw liveError;
           if(!live) throw new Error('Live class not found');
-          const chapter='Live Classes';
+          const chapter=(live.title||'Live Classes').split(' — ')[0].trim()||'Live Classes';
           const safeChapter=chapter.replace(/[^a-zA-Z0-9_-]/g,'_');
           const path=me.id+'/'+live.id+'/'+safeChapter+'/'+Date.now()+'.webm';
           const up=await db.storage.from('class-recordings').upload(path,blob,{contentType:blob.type||'video/webm',upsert:false});
@@ -52,9 +52,11 @@
       try{
         const file=input.files&&input.files[0];
         if(!file) return;
-        const title=prompt('Recording title',file.name.replace(/\.[^.]+$/,''));
+        const subject=prompt('Subject name (Example: Hindi, Science)','Hindi');
+        if(!subject) return;
+        const title=prompt('Lesson / Chapter name',file.name.replace(/\.[^.]+$/,''));
         if(!title) return;
-        const chapter=prompt('Chapter / Folder name','Recorded Classes')||'Recorded Classes';
+        const chapter=subject.trim()||'Recorded Classes';
         const safeChapter=chapter.replace(/[^a-zA-Z0-9_-]/g,'_');
         const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
         const path=me.id+'/'+classroomId+'/'+safeChapter+'/'+Date.now()+'_'+safeName;
