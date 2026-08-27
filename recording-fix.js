@@ -3,19 +3,19 @@
   function safe(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
   window.startRecording = async function(sid){
-    if(!window.localStream || !window.localStream.getTracks().length) return;
-    window.recordChunks=[];
+    if(!localStream || !localStream.getTracks().length) return;
+    recordChunks=[];
     try{
       let opts={};
       if(window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) opts.mimeType='video/webm;codecs=vp9,opus';
       else if(window.MediaRecorder && MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) opts.mimeType='video/webm;codecs=vp8,opus';
-      window.recorder=new MediaRecorder(window.localStream,opts);
-      window.recorder.ondataavailable=e=>{if(e.data&&e.data.size)window.recordChunks.push(e.data)};
-      window.recorder.onstop=async()=>{
+      recorder=new MediaRecorder(localStream,opts);
+      recorder.ondataavailable=e=>{if(e.data&&e.data.size)recordChunks.push(e.data)};
+      recorder.onstop=async()=>{
         try{
-          const blob=new Blob(window.recordChunks,{type:window.recorder.mimeType||'video/webm'});
+          const blob=new Blob(recordChunks,{type:recorder.mimeType||'video/webm'});
           if(!blob.size) throw new Error('Recording file is empty');
-          const {data:live,error:liveError}=await db.from('live_classes').select('id,classroom_id,teacher_id,title').eq('id',window.liveCurrentId).maybeSingle();
+          const {data:live,error:liveError}=await db.from('live_classes').select('id,classroom_id,teacher_id,title').eq('id',liveCurrentId).maybeSingle();
           if(liveError) throw liveError;
           if(!live) throw new Error('Live class not found');
           const chapter='Live Classes';
@@ -39,7 +39,7 @@
           alert('Recording save failed: '+(e.message||e));
         }
       };
-      window.recorder.start(1000);
+      recorder.start(1000);
     }catch(e){console.error('Recorder start failed',e);alert('Recording could not start: '+(e.message||e));}
   };
 
@@ -49,20 +49,22 @@
     input.type='file';
     input.accept='video/*,.webm,.mp4,.mov,.m4v';
     input.onchange=async()=>{
-      const file=input.files&&input.files[0];
-      if(!file) return;
-      const title=prompt('Recording title',file.name.replace(/\.[^.]+$/,''));
-      if(!title) return;
-      const chapter=prompt('Chapter / Folder name','Recorded Classes')||'Recorded Classes';
-      const safeChapter=chapter.replace(/[^a-zA-Z0-9_-]/g,'_');
-      const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-      const path=me.id+'/'+classroomId+'/'+safeChapter+'/'+Date.now()+'_'+safeName;
-      const up=await db.storage.from('class-recordings').upload(path,file,{contentType:file.type||'video/webm',upsert:false});
-      if(up.error) return alert('Recording upload failed: '+up.error.message);
-      const url=db.storage.from('class-recordings').getPublicUrl(path).data.publicUrl;
-      const ins=await db.from('recorded_chapters').insert({classroom_id:classroomId,teacher_id:me.id,title,chapter_name:chapter,video_url:url,storage_path:path});
-      if(ins.error) return alert('Recording details save failed: '+ins.error.message);
-      alert('Recording uploaded successfully. Students can now view and download it.');
+      try{
+        const file=input.files&&input.files[0];
+        if(!file) return;
+        const title=prompt('Recording title',file.name.replace(/\.[^.]+$/,''));
+        if(!title) return;
+        const chapter=prompt('Chapter / Folder name','Recorded Classes')||'Recorded Classes';
+        const safeChapter=chapter.replace(/[^a-zA-Z0-9_-]/g,'_');
+        const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+        const path=me.id+'/'+classroomId+'/'+safeChapter+'/'+Date.now()+'_'+safeName;
+        const up=await db.storage.from('class-recordings').upload(path,file,{contentType:file.type||'video/webm',upsert:false});
+        if(up.error) throw up.error;
+        const url=db.storage.from('class-recordings').getPublicUrl(path).data.publicUrl;
+        const ins=await db.from('recorded_chapters').insert({classroom_id:classroomId,teacher_id:me.id,title,chapter_name:chapter,video_url:url,storage_path:path});
+        if(ins.error) throw ins.error;
+        alert('Recording uploaded successfully. Students can now view and download it.');
+      }catch(e){alert('Recording upload failed: '+(e.message||e))}
     };
     input.click();
   };
