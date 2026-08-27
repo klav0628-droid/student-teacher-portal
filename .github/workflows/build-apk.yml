@@ -2,12 +2,46 @@ name: Build Kartar Classes APK
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'branding.json'
+      - 'app/**'
+      - '.github/workflows/build-apk.yml'
   workflow_dispatch:
+    inputs:
+      app_name:
+        description: App name
+        required: true
+        default: KARTAR CLASSES DAUDNAGAR
+      portal_url:
+        description: Portal URL
+        required: true
+        default: https://klav0628-droid.github.io/student-teacher-portal/
+permissions:
+  contents: write
 jobs:
   build:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare branding
+        env:
+          INPUT_NAME: ${{ github.event.inputs.app_name }}
+          INPUT_URL: ${{ github.event.inputs.portal_url }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          python3 - <<'PY'
+          import json,os,base64,html
+          d=json.load(open('branding.json')) if os.path.exists('branding.json') else {}
+          if os.environ['EVENT_NAME']=='workflow_dispatch':
+            d['app_name']=os.environ['INPUT_NAME']; d['portal_url']=os.environ['INPUT_URL']
+          d.setdefault('app_name','KARTAR CLASSES DAUDNAGAR')
+          d.setdefault('portal_url','https://klav0628-droid.github.io/student-teacher-portal/')
+          open('app/src/main/res/values/branding.xml','w').write('<resources><string name="app_name">'+html.escape(d['app_name'])+'</string><string name="portal_url">'+html.escape(d['portal_url'])+'</string></resources>')
+          os.makedirs('app/src/main/res/drawable',exist_ok=True)
+          if d.get('logo_base64'):
+            open('app/src/main/res/drawable/brand_logo.webp','wb').write(base64.b64decode(d['logo_base64']))
+          PY
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -17,9 +51,17 @@ jobs:
           gradle-version: '8.9'
       - name: Build APK
         run: gradle --no-daemon assembleDebug
-      - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Kartar-Classes-Daudnagar.apk
+      - name: Publish APK
+        run: |
+          mkdir -p apk
+          cp app/build/outputs/apk/debug/app-debug.apk apk/latest.apk
+          cp app/build/outputs/apk/debug/app-debug.apk apk/Kartar-Classes-Daudnagar.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apk/
+          git diff --cached --quiet || git commit -m "Publish latest Kartar Classes APK"
+          git push
       - uses: actions/upload-artifact@v4
         with:
           name: Kartar-Classes-Daudnagar-APK
-          path: Kartar-Classes-Daudnagar.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
