@@ -51,6 +51,8 @@ jobs:
           gradle-version: '8.9'
       - name: Create release signing key
         run: keytool -genkeypair -v -keystore kartar-release.jks -storepass 'KartarClasses2026!' -keypass 'KartarClasses2026!' -alias kartar -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Kartar Classes Daudnagar, O=Kartar Classes, C=IN'
+      - name: Move release keystore into app directory
+        run: cp kartar-release.jks app/kartar-release.jks
       - name: Build signed release APK
         run: gradle --no-daemon assembleRelease
       - name: Publish APK
