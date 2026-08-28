@@ -15,7 +15,7 @@ on:
       portal_url:
         description: Portal URL
         required: true
-        default: https://klav0628-droid.github.io/student-teacher-portal/
+        default: https://portal.greatindia.technology/
 permissions:
   contents: write
 jobs:
