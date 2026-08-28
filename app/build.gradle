@@ -12,7 +12,7 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("kartar-release.jks")
+            storeFile file("${project.projectDir}/kartar-release.jks")
             storePassword "KartarClasses2026!"
             keyAlias "kartar"
             keyPassword "KartarClasses2026!"
