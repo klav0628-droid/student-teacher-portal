@@ -10,9 +10,18 @@ android {
         versionCode 1
         versionName '1.0'
     }
+    signingConfigs {
+        release {
+            storeFile file("kartar-release.jks")
+            storePassword "KartarClasses2026!"
+            keyAlias "kartar"
+            keyPassword "KartarClasses2026!"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
